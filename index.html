@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Caliber 9 Talent Matrix</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- ADDED: Client-side DOM capture library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <!-- UPDATED: Importing external CSS for theme and application styles -->
+    <link rel="stylesheet" href="theme_setup.css">
+    
+    <style>
+        /* This style block is now empty as all application-specific CSS was moved to theme_setup.css */
+    </style>
+</head>
+<body class="p-0">
+
+    <!-- Animated Shapes Container (Injected from Theme) -->
+    <!-- The classes for these shapes are defined in theme_setup.css -->
+    <div class="bg-shapes">
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+    </div>
+
+    <div id="message-box" class="fixed top-4 right-4 z-50 transition-opacity duration-300 opacity-0 pointer-events-none"></div>
+
+    <div class="container mx-auto p-4 md:p-8">
+
+        <header class="mb-6 pb-4 flex justify-between items-center glass p-6">
+            <div class="flex items-center gap-4">
+                 <!-- UX FIX: Moved toggle button here for proximity to the sliding panel -->
+                <button id="toggle-controls-btn" onclick="toggleControlsPanel()" 
+                        class="btn-theme btn-primary-theme text-sm font-semibold transition duration-150">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sliders-horizontal"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="18" x2="3" y1="12" y2="12"/><line x1="21" x2="18" y1="12" y2="12"/><line x1="21" x2="12" y1="20" y2="20"/><line x1="8" x2="3" y1="20" y2="20"/><line x1="14" y1="2" x2="14" y2="6"/><line x1="18" y1="10" x2="18" y2="14"/><line x1="12" y1="18" x2="12" y2="22"/></svg>
+                </button>
+                <div class="flex flex-col">
+                    <h1 class="text-3xl font-extrabold text-white">Caliber 9 Talent Matrix</h1>
+                    <div id="auth-info" class="text-sm text-gray-300 mt-1">
+                        <span id="user-id-display">Data Storage: LocalStorage (Not Collaborative)</span> |
+                        <span id="app-id-display">Simulated App: Static</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- UX OPTIMIZATION: Reduced logo size to 64px for better header balance -->
+            <div class="flex items-center justify-end">
+                <img 
+                    src="images/caliber9_logo.png" 
+                    alt="Caliber 9 Logo" 
+                    class="w-16 h-16 shadow-lg"
+                    onerror="this.onerror=null; this.src='https://placehold.co/64x64/00ffff/000000?text=C9';"
+                />
+            </div>
+            
+        </header>
+        
+        <!-- Controls Panel (Floating Container - Applied Glass/Dark Styles) -->
+        <div id="controls-panel-container" class="panel-hidden">
+            <!-- Content of controls panel -->
+            <div class="space-y-4 h-full">
+                <h2 class="text-xl font-semibold border-b pb-2">Data & Calibration Tools</h2>
+
+                <!-- File Upload (Simulated) -->
+                <div>
+                    <label for="file-upload" class="block text-sm font-medium mb-2">1. Upload & Map Data (CSV/XLSX)</label>
+                    <input type="file" id="file-upload" accept=".csv, .xlsx" class="block w-full text-sm text-gray-200 controls-input
+                        file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-500 file:text-white hover:file:bg-indigo-600"
+                    />
+                    <p class="text-xs text-gray-400 mt-1">Upload CSV to load data into the grid.</p>
+                </div>
+
+                <!-- New Employee Button (Themed - Primary Action) -->
+                <button onclick="showNewEmployeeForm(true)" class="w-full btn-theme btn-primary-theme py-2 px-4 transition duration-150">
+                    + Add New Employee
+                </button>
+
+                <!-- New Employee Form Area (UX/A11Y FIX: Added explicit labels and standardized layout) -->
+                <div id="new-employee-form-area" class="border p-4 rounded-lg hidden">
+                    <!-- Content injected by JS below -->
+                </div>
+                
+                <!-- Filtering Controls -->
+                <div class="pt-4 border-t space-y-3">
+                    <p class="text-sm font-bold">2. View Controls</p>
+
+                    <!-- Filter by Department -->
+                    <div>
+                        <label for="filter-dept" class="block text-xs font-medium">Filter by Department</label>
+                        <select id="filter-dept" onchange="applyFiltersAndGrouping()" class="w-full controls-select">
+                            <option value="All">All Departments</option>
+                            <!-- Options populated dynamically -->
+                        </select>
+                    </div>
+
+                    <!-- Grouping/Coloring -->
+                    <div>
+                        <label for="group-by" class="block text-xs font-medium">Group Markers by</label>
+                        <select id="group-by" onchange="applyFiltersAndGrouping()" class="w-full controls-select">
+                            <option value="None">None (Default Color)</option>
+                            <option value="department">Department</option>
+                            <option value="manager_id">Manager ID (Simulated)</option>
+                            <option value="retention_risk">Retention Risk</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Export Buttons -->
+                <div class="pt-4 border-t">
+                    <p class="text-sm font-bold mb-2">3. Export Results</p>
+                    <button onclick="exportData('csv')" class="w-full mb-2 py-2 px-4 btn-theme btn-primary-theme transition duration-150" style="background: linear-gradient(135deg, #10b981, #059669);">
+                        Export Raw Data (CSV)
+                    </button>
+                    <button onclick="exportData('summary')" class="w-full mb-2 py-2 px-4 btn-theme btn-primary-theme transition duration-150" style="background: linear-gradient(135deg, #10b981, #059669);">
+                        Export Summary Report (CSV)
+                    </button>
+                    <button onclick="exportData('pdf')" class="w-full py-2 px-4 btn-theme transition duration-150" style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.3);">
+                        Export Grid Snapshot (PDF/PNG)
+                    </button>
+                </div>
+            </div>
+        </div>
+
+
+    <main id="app-content" class="flex flex-col lg:flex-row gap-6 transition-transform duration-500">
+        
+        <!-- Grid Visualization (Column 2 - Applied Glass/Dark Styles) -->
+        <div class="lg:w-3/4 flex flex-col glass p-6">
+            <h2 class="text-xl font-semibold text-white mb-4">Talent Calibration Grid</h2>
+
+            <div class="flex flex-col flex-grow">
+                <!-- Y-Axis Label (Potential) -->
+                <div class="flex items-stretch flex-grow">
+                    <div class="axis-label-y flex items-center justify-center p-2">Potential</div>
+
+                    <!-- Main Grid Area -->
+                    <div id="grid-container" class="flex flex-col flex-grow">
+                        <!-- 9-Box Grid -->
+                        <div id="nine-box-grid" class="box-grid grid flex-grow">
+                            <!-- Boxes are generated by JavaScript -->
+                        </div>
+
+                        <!-- X-Axis Label Container (Performance) -->
+                        <div id="x-axis-labels" class="grid grid-cols-3">
+                            <div class="axis-label-x">Low Performance</div>
+                            <div class="axis-label-x">Moderate Performance</div>
+                            <div class="axis-label-x">High Performance</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Employee Details Panel (Column 3 - Applied Glass/Dark Styles) -->
+        <div class="lg:w-1/4 h-fit">
+             <div id="details-panel" class="p-4 hidden">
+                <h3 class="text-lg font-semibold border-b pb-2 mb-2">Selected Employee Details (Live Edit)</h3>
+                <div id="employee-info" class="text-sm">Click an employee marker to view or edit their details.</div>
+            </div>
+        </div>
+    </main>
+
+    <!-- UPDATED: Importing external theme JavaScript for interactive effects -->
+    <script src="theme_setup.js"></script> 
+    
+    <script>
+        // --- Global Variables and Persistence Setup (LocalStorage) ---
+        let employeeData = [];
+        let selectedEmployee = null;
+        let groupColors = {}; // Storage for group colors to ensure consistency
+        const LOCAL_STORAGE_KEY = 'caliber9_employee_data';
+        const MOCK_USER_ID = 'static_user_001'; // Simulated user ID for logging
+        const BASE_IMAGE_PATH = 'images/'; // ADDED: Simulated image path constant (REVISED TO RELATIVE PATH)
+
+        const BOXES = [
+            // Updated names and colors based on user request
+            { id: 'H_H', name: 'Rough Diamond', color: 'color-H_H', strategy: 'Retain & Reward (Succession Ready)' },
+            { id: 'H_M', name: 'Future Star', color: 'color-H_M', strategy: 'Invest in Development' },
+            { id: 'H_L', name: 'Consistent Star', color: 'color-H_L', strategy: 'Monitor/Motivate' },
+            
+            { id: 'M_H', name: 'Inconsistent Player', color: 'color-M_H', strategy: 'Expert Role/Horizontal Moves' },
+            { id: 'M_M', name: 'Key Player', color: 'color-M_M', strategy: 'Maintain & Engage' },
+            { id: 'M_L', name: 'Current Star', color: 'color-M_L', strategy: 'Performance Improvement Plan (PIP)' },
+
+            { id: 'L_H', name: 'Talent Risk', color: 'color-L_H', strategy: 'Recognition & Leverage Expertise' },
+            { id: 'L_M', name: 'Solid Professional', color: 'color-L_M', strategy: 'Strict Coaching & Review' },
+            { id: 'L_L', name: 'High Professional', color: 'color-L_L', strategy: 'Reassess Fit/Exit Strategy' }
+        ];
+
+        const CATEGORY_MAP = {
+            'High_High': 'H_H', 'High_Moderate': 'H_M', 'High_Low': 'H_L',
+            'Moderate_High': 'M_H', 'Moderate_Moderate': 'M_M', 'Moderate_Low': 'M_L',
+            'Low_High': 'L_H', 'Low_Moderate': 'L_M', 'Low_Low': 'L_L'
+        };
+
+        const BOX_COORDINATES = {
+            'H_H': { y: 'High', x: 'High' }, 'H_M': { y: 'High', x: 'Moderate' }, 'H_L': { y: 'High', x: 'Low' },
+            'M_H': { y: 'Moderate', x: 'High' }, 'M_M': { y: 'Moderate', x: 'Moderate' }, 'M_L': { y: 'Moderate', x: 'Low' },
+            'L_H': { y: 'Low', x: 'High' }, 'L_M': { y: 'Low', x: 'Moderate' }, 'L_L': { y: 'Low', x: 'Low' }
+        };
+
+        function generateRandomEmployeeData(count) {
+            const departments = ['Technology', 'Marketing', 'Sales', 'HR', 'Finance', 'Operations', 'Legal', 'Product', 'Design', 'Customer Success'];
+            const titles = ['Analyst', 'Associate', 'Manager', 'Senior Manager', 'Director', 'VP', 'Coordinator', 'Specialist', 'Lead', 'Consultant'];
+            const categories = ['Low', 'Moderate', 'High'];
+            const risks = ['Low', 'Moderate', 'High'];
+            const readiness = ['Ready Now', '6-12 Months', '1-2 Years', '2+ Years'];
+            const data = [];
+
+            for (let i = 0; i < count; i++) {
+                const dept = departments[Math.floor(Math.random() * departments.length)];
+                const title = titles[Math.floor(Math.random() * titles.length)];
+                const perf = categories[Math.floor(Math.random() * categories.length)];
+                const pot = categories[Math.floor(Math.random() * categories.length)];
+                
+                data.push({
+                    user_id: `USR${1000 + i}`,
+                    name: `Employee ${i + 1}`,
+                    title: title,
+                    department: dept,
+                    performance_category: perf,
+                    potential_category: pot,
+                    retention_risk: risks[Math.floor(Math.random() * risks.length)],
+                    manager_id: `MGR${Math.floor(Math.random() * 5) + 1}`,
+                    successor_role: '',
+                    readiness_level: readiness[Math.floor(Math.random() * readiness.length)],
+                    notes: '',
+                    group_color: getRandomColor()
+                    // placement will be set in initializeData
+                });
+            }
+            return data;
+        }
+
+        const INITIAL_MOCK_DATA = generateRandomEmployeeData(50);
+        
+        /**
+         * UX Helper: Creates an input field with a label and standardized dark theme styles.
+         */
+        function createInputField(label, id, type, placeholder, required, defaultValue) {
+            const requiredAttr = required ? 'required' : '';
+            const valueAttr = defaultValue ? `value="${defaultValue}"` : '';
+            return `
+                <div>
+                    <label for="${id}" class="block text-xs font-medium text-gray-300 mb-1">${label}${required ? ' *' : ''}</label>
+                    <input id="${id}" type="${type}" placeholder="${placeholder}" ${valueAttr}
+                           class="w-full controls-input text-sm" ${requiredAttr}>
+                </div>
+            `;
+        }
+
+        // --- UI Helper Functions ---
+
+        function createCategorySelect(id, field, currentValue) {
+            const options = ['Low', 'Moderate', 'High'].map(val => 
+                `<option value="${val}" ${currentValue === val ? 'selected' : ''}>${val}</option>`
+            ).join('');
+            
+            // Adjusted classes to match dark theme input style
+            return `
+                <div class="flex flex-col">
+                    <label for="${id}" class="text-xs font-medium text-gray-300">${field.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')} Category</label>
+                    <select id="${id}" data-field="${field}" 
+                            class="w-full p-2 border rounded-lg shadow-sm text-sm">
+                        ${options}
+                    </select>
+                </div>
+            `;
+        }
+
+        function createDropdown(label, field, currentValue, values) {
+            const options = values.map(val => 
+                `<option value="${val}" ${currentValue === val ? 'selected' : ''}>${val}</option>`
+            ).join('');
+            
+            // Adjusted classes to match dark theme input style
+            return `
+                <div>
+                    <label for="${field}" class="block text-xs font-medium text-gray-300">${label}</label>
+                    <select id="${field}" class="w-full p-2 border rounded-lg text-sm">
+                        ${options}
+                    </select>
+                </div>
+            `;
+        }
+        
+        // --- End UI Helper Functions ---
+
+        // UX/A11Y FIX: Refactored content to use createInputField helper with explicit labels
+        document.querySelector('#new-employee-form-area').innerHTML = `
+            <h3 class="text-md font-bold text-white mb-3">New Employee Details</h3>
+            <div class="space-y-3">
+                ${createInputField('User ID', 'new-user-id', 'text', 'e.g., KJAN318', true, '')}
+                ${createInputField('Full Name', 'new-name', 'text', 'e.g., Jane Doe', true, '')}
+                ${createInputField('Job Title', 'new-title', 'text', 'e.g., Senior Analyst', true, '')}
+                ${createInputField('Department', 'new-dept', 'text', 'e.g., Marketing', true, '')}
+                ${createInputField('Manager ID', 'new-manager-id', 'text', 'e.g., MGR001', false, 'MGR999')}
+            </div>
+
+            <div class="space-y-3 pt-3">
+                <p class="text-sm font-medium text-gray-300 border-t pt-3 border-gray-700">Initial Calibration</p>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label for="new-performance" class="text-xs font-medium text-gray-300">Performance</label>
+                        <select id="new-performance" class="w-full controls-input text-sm">
+                            <option value="Low">Low</option>
+                            <option value="Moderate" selected>Moderate</option>
+                            <option value="High">High</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="new-potential" class="text-xs font-medium text-gray-300">Potential</label>
+                        <select id="new-potential" class="w-full controls-input text-sm">
+                            <option value="Low">Low</option>
+                            <option value="Moderate" selected>Moderate</option>
+                            <option value="High">High</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <!-- Standardized button to primary theme -->
+            <button onclick="addNewEmployee()" class="mt-5 w-full py-2 btn-theme btn-primary-theme transition duration-150">
+                Create Employee
+            </button>
+            <button onclick="showNewEmployeeForm(false)" class="mt-2 w-full py-2 btn-theme transition duration-150" style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.3);">
+                Cancel
+            </button>
+        `;
+        
+        /**
+         * Helper to determine the category mapping from string values (P/P)
+         */
+        function getPlacementId(potential, performance) {
+            const key = `${potential}_${performance}`;
+            return CATEGORY_MAP[key] || 'M_M'; // Default to Core Player if mapping fails
+        }
+        
+        /**
+         * Parses CSV text content into an array of employee objects.
+         * Assumes headers: user_id, name, title, department, performance_category, potential_category
+         * NOTE: This simple split(',') method is prone to failure if any field contains a comma. 
+         * For demonstration purposes with clean data, it is functional.
+         * @param {string} text - The raw CSV content.
+         * @returns {Array<Object>}
+         */
+        function parseCSV(text) {
+            const lines = text.trim().split('\n');
+            if (lines.length <= 1) return [];
+
+            // Simple parser assuming comma delimiter and quoting is minimal/handled by browser API
+            const headers = lines[0].toLowerCase().split(',').map(h => h.trim());
+            const requiredHeaders = ['user_id', 'name', 'title', 'department', 'performance_category', 'potential_category'];
+
+            if (!requiredHeaders.every(h => headers.includes(h))) {
+                showMessageBox(`CSV upload failed. Missing required columns: ${requiredHeaders.join(', ')}`, 'error');
+                return [];
+            }
+            
+            const newEmployeeData = [];
+            
+            for (let i = 1; i < lines.length; i++) {
+                const values = lines[i].split(',').map(v => v.trim());
+                if (values.length !== headers.length) continue; 
+
+                const employee = {};
+                headers.forEach((header, index) => {
+                    employee[header] = values[index];
+                });
+
+                // Basic Data Mapping and Validation
+                const userId = employee.user_id;
+                const perf = employee.performance_category;
+                const pot = employee.potential_category;
+
+                if (userId && perf && pot) {
+                    newEmployeeData.push({
+                        // Required structural fields
+                        id: getNewId(), // Assign new temporary numerical ID for internal tracking
+                        user_id: userId,
+                        name: employee.name || 'Unknown Name',
+                        title: employee.title || 'N/A',
+                        department: employee.department || 'Unknown Dept',
+                        
+                        // Calibration data
+                        performance_category: perf,
+                        potential_category: pot,
+                        placement: getPlacementId(pot, perf),
+
+                        // Succession/Risk data (use defaults if not present in CSV)
+                        retention_risk: employee.retention_risk || 'Low',
+                        manager_id: employee.manager_id || 'N/A', 
+                        successor_role: employee.successor_role || '',
+                        readiness_level: employee.readiness_level || '1-2 Years',
+                        notes: employee.notes || '',
+                        group_color: getRandomColor()
+                    });
+                }
+            }
+            return newEmployeeData;
+        }
+
+        /**
+         * Loads data from LocalStorage or initializes with mock data.
+         */
+        function initializeData() {
+            const storedData = localStorage.getItem(LOCAL_STORAGE_KEY);
+            if (storedData) {
+                try {
+                    employeeData = JSON.parse(storedData);
+                    showMessageBox("Data loaded from local storage.", 'info');
+                } catch (e) {
+                    console.error("Error parsing local storage data:", e);
+                    employeeData = INITIAL_MOCK_DATA.map(emp => ({ 
+                        ...emp, 
+                        placement: CATEGORY_MAP[`${emp.potential_category}_${emp.performance_category}`] 
+                    }));
+                    showMessageBox("Local storage corrupted. Reverting to mock data.", 'error');
+                }
+            } else {
+                 employeeData = INITIAL_MOCK_DATA.map(emp => ({ 
+                    ...emp, 
+                    placement: CATEGORY_MAP[`${emp.potential_category}_${emp.performance_category}`] 
+                }));
+                showMessageBox("No data found. Initializing with mock data.", 'info');
+            }
+            renderGrid();
+            populateFilterOptions();
+        }
+
+        /**
+         * Saves current employeeData to LocalStorage.
+         */
+        function saveData() {
+            try {
+                localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(employeeData));
+                console.log("Data saved to local storage.");
+            } catch (e) {
+                console.error("Error saving data to local storage:", e);
+                showMessageBox("Error saving data locally.", 'error');
+            }
+        }
+        
+        // --- New Employee Functions ---
+
+        /**
+         * Finds the next available integer ID for a new employee.
+         */
+        function getNewId() {
+            // Since we are using user_id as the primary key now, this is unnecessary, 
+            // but for safety in case of numerical export fields, we simulate one.
+            return Math.floor(Math.random() * 1000000); 
+        }
+
+        /**
+         * Toggles the visibility of the controls panel and main content shift.
+         */
+        function toggleControlsPanel() {
+            const panel = document.getElementById('controls-panel-container');
+            const mainContent = document.getElementById('app-content');
+            
+            // Check based on the presence of the active class
+            const isActive = panel.classList.contains('panel-active');
+
+            if (isActive) {
+                panel.classList.remove('panel-active');
+                panel.classList.add('panel-hidden');
+                mainContent.classList.remove('content-shifted');
+            } else {
+                panel.classList.remove('panel-hidden');
+                panel.classList.add('panel-active');
+                // The main content shift is usually only necessary on narrow screens
+                if (window.innerWidth < 1024) { 
+                    mainContent.classList.add('content-shifted');
+                }
+            }
+        }
+
+        /**
+         * Toggles the visibility of the new employee form.
+         */
+        function showNewEmployeeForm(show) {
+            document.getElementById('new-employee-form-area').classList.toggle('hidden', !show);
+            // Optionally hide details panel when showing new form
+            if (show) hideEmployeeDetails();
+        }
+
+        /**
+         * Validates form and adds new employee to data set.
+         */
+        function addNewEmployee() {
+            const userId = document.getElementById('new-user-id').value.trim();
+            const name = document.getElementById('new-name').value.trim();
+            const title = document.getElementById('new-title').value.trim();
+            const department = document.getElementById('new-dept').value.trim();
+            const managerId = document.getElementById('new-manager-id').value.trim();
+            const performance = document.getElementById('new-performance').value;
+            const potential = document.getElementById('new-potential').value;
+
+            if (!userId || !name || !title || !department) {
+                showMessageBox("Please fill in User ID, Name, Title, and Department.", 'error');
+                return;
+            }
+            if (employeeData.some(e => e.user_id === userId)) {
+                 showMessageBox(`User ID "${userId}" already exists.`, 'error');
+                 return;
+            }
+            
+            const newPlacement = CATEGORY_MAP[`${potential}_${performance}`];
+            
+            const newEmployee = {
+                id: getNewId(), // Still use a numerical ID for consistency in markers/exports, but user_id is the unique key
+                user_id: userId,
+                name: name,
+                title: title,
+                department: department,
+                performance_category: performance,
+                potential_category: potential,
+                placement: newPlacement,
+                retention_risk: 'Low', // Default
+                manager_id: managerId, 
+                successor_role: '',
+                readiness_level: '1-2 Years',
+                notes: '',
+                group_color: getRandomColor()
+            };
+
+            employeeData.push(newEmployee);
+            saveData();
+            logCalibrationChange(userId, 'N/A', newPlacement, 'New Employee Added');
+            
+            // Reset form fields
+            document.getElementById('new-user-id').value = '';
+            document.getElementById('new-name').value = '';
+            document.getElementById('new-title').value = '';
+            document.getElementById('new-dept').value = '';
+            
+            showMessageBox(`${name} (User ID: ${userId}) added successfully to ${newPlacement}!`, 'success');
+            showNewEmployeeForm(false);
+            renderGrid(); // Re-render to show new marker
+            populateFilterOptions(); // Update department filter list
+        }
+        
+        // --- Utility for Consistent Group Coloring ---
+
+        function getGroupColor(groupKey) {
+            if (!groupKey) return '#00ffff'; // Default light color
+            if (groupColors[groupKey]) {
+                return groupColors[groupKey];
+            }
+            // Assign a new random color for the new group
+            const newColor = getRandomColor();
+            groupColors[groupKey] = newColor;
+            return newColor;
+        }
+
+        // --- Core Application Logic ---
+
+        /**
+         * Renders the entire 9-box grid structure.
+         */
+        function renderGrid() {
+            const grid = document.getElementById('nine-box-grid');
+            grid.innerHTML = '';
+
+            // Render order is intentionally reversed here for the correct CSS grid placement
+            const renderOrder = ['H_H', 'H_M', 'H_L', 'M_H', 'M_M', 'M_L', 'L_H', 'L_M', 'L_L'].reverse();
+
+            renderOrder.forEach(boxId => {
+                // Simplified the box lookup, fixed bug
+                const box = BOXES.find(b => b.id === boxId); 
+                
+                if (!box) {
+                    console.error(`Box configuration not found for ID: ${boxId}`);
+                    return; 
+                }
+                
+                const boxElement = document.createElement('div');
+                boxElement.id = boxId;
+                boxElement.className = `box ${box.color} flex flex-wrap content-start rounded-sm`;
+                boxElement.setAttribute('data-box-y', BOX_COORDINATES[boxId].y);
+                boxElement.setAttribute('data-box-x', BOX_COORDINATES[boxId].x);
+                boxElement.innerHTML = `<span class="box-title">${box.name}</span>`;
+
+                // Drag/drop listeners
+                boxElement.addEventListener('dragover', allowDrop);
+                boxElement.addEventListener('drop', handleDrop);
+                
+                // Add precise visual feedback handlers for drop zones (UX Optimization)
+                boxElement.addEventListener('dragenter', handleDragEnter);
+                boxElement.addEventListener('dragleave', handleDragLeave);
+
+
+                grid.prepend(boxElement); // Prepend to reverse the order for display
+            });
+            
+            applyFiltersAndGrouping();
+        }
+
+        /**
+         * Renders employee markers into their respective boxes based on filters/grouping.
+         */
+        function renderEmployees() {
+            // Clear existing markers
+            document.querySelectorAll('.employee-marker').forEach(marker => marker.remove());
+            
+            const deptFilter = document.getElementById('filter-dept').value;
+            const groupBy = document.getElementById('group-by').value;
+
+            // 1. Filter the data
+            const filteredData = employeeData.filter(e => 
+                deptFilter === 'All' || e.department === deptFilter
+            );
+
+            // 2. Render filtered markers
+            filteredData.forEach(employee => {
+                const boxElement = document.getElementById(employee.placement);
+                if (boxElement) {
+                    const marker = createEmployeeMarker(employee, groupBy);
+                    boxElement.appendChild(marker);
+                }
+            });
+
+             // Reselect the employee if one was active
+            if (selectedEmployee) {
+                const marker = document.getElementById(`emp-${selectedEmployee.user_id}`);
+                if (marker) {
+                    marker.classList.add('marker-selected');
+                }
+            }
+        }
+
+        /**
+         * Creates a single employee marker DOM element.
+         */
+        function createEmployeeMarker(employee, groupBy) {
+            const initials = employee.name.split(/\s+/).map(n => n[0]).join('').toUpperCase().slice(0, 2);
+            const marker = document.createElement('div');
+            // USE user_id as the element ID to prevent marker collision and simplify lookups
+            marker.id = `emp-${employee.user_id}`;
+            marker.className = 'employee-marker tooltip-container';
+            marker.setAttribute('draggable', true);
+            // Pass user_id via data attribute
+            marker.setAttribute('data-id', employee.user_id);
+            
+            // --- Group Coloring Logic ---
+            let groupValue = '';
+            let color = '';
+            
+            if (groupBy === 'department') groupValue = employee.department;
+            else if (groupBy === 'manager_id') groupValue = employee.manager_id;
+            else if (groupBy === 'retention_risk') groupValue = employee.retention_risk;
+            
+            // If grouping is active, use the consistent group color; otherwise, use a neutral color.
+            if (groupBy !== 'None' && groupValue) {
+                color = getGroupColor(groupValue);
+            } else {
+                // Default neutral color when not grouping (bright blue for dark theme contrast)
+                color = '#00BFFF'; 
+            }
+
+            marker.style.backgroundColor = color;
+            marker.style.borderColor = color;
+            
+            // Calculate image source URL based on User ID
+            const imageSrc = `${BASE_IMAGE_PATH}${employee.user_id}.png`;
+
+            // Tooltip/Hover Card (UX Enhancement)
+            const boxInfo = BOXES.find(b => b.id === employee.placement);
+            const tooltipHTML = `
+                <div class="tooltip-card p-3 rounded-lg shadow-2xl border min-w-[200px] text-left">
+                    <div class="flex items-center space-x-2 mb-2">
+                        <!-- Simulated Picture/Avatar -->
+                        <img src="${imageSrc}" onerror="this.src='https://placehold.co/40x40/4b5563/ffffff?text=${initials}'" class="w-10 h-10 rounded-full object-cover">
+                        <div>
+                            <p class="font-bold text-white">${employee.name}</p>
+                            <p class="text-xs text-cyan-400">${employee.title}</p>
+                        </div>
+                    </div>
+                    <p class="text-xs font-semibold text-gray-200">Segment: ${boxInfo ? boxInfo.name : 'N/A'}</p>
+                    <p class="text-xs text-gray-300">Risk: ${employee.retention_risk}</p>
+                    <p class="text-xs text-gray-300">Ready: ${employee.readiness_level}</p>
+                </div>
+            `;
+            
+            marker.innerHTML = `<span class="employee-marker-initials">${initials}</span>${tooltipHTML}`;
+
+            // Attach listeners
+            marker.addEventListener('dragstart', handleDragStart);
+            marker.addEventListener('click', (e) => {
+                // Stop propagation to prevent body click listener from immediately hiding the panel
+                e.stopPropagation(); 
+                showEmployeeDetails(employee.user_id);
+            });
+            
+            return marker;
+        }
+
+        /**
+         * Applies the selected filters and grouping/coloring, then re-renders.
+         */
+        function applyFiltersAndGrouping() {
+            // Re-render handles both filtering and grouping coloring
+            renderEmployees();
+        }
+
+        /**
+         * Populates filter options based on current data.
+         */
+        function populateFilterOptions() {
+            const deptSelect = document.getElementById('filter-dept');
+            const currentDept = deptSelect.value;
+            deptSelect.innerHTML = '<option value="All">All Departments</option>';
+            
+            const departments = [...new Set(employeeData.map(e => e.department))].filter(Boolean).sort();
+            departments.forEach(dept => {
+                const option = document.createElement('option');
+                option.value = dept;
+                option.textContent = dept;
+                if (dept === currentDept) option.selected = true;
+                deptSelect.appendChild(option);
+            });
+        }
+
+        // --- Drag and Drop Handlers (Optimized UX) ---
+
+        function handleDragStart(e) {
+            // Set user_id for drag operation
+            e.dataTransfer.setData('text/plain', e.target.getAttribute('data-id'));
+            e.target.classList.add('opacity-50');
+        }
+
+        function allowDrop(e) {
+            e.preventDefault();
+        }
+        
+        function handleDragEnter(e) {
+             e.currentTarget.classList.add('ring-4', 'ring-cyan-300', 'ring-offset-2');
+        }
+
+        function handleDragLeave(e) {
+             e.currentTarget.classList.remove('ring-4', 'ring-cyan-300', 'ring-offset-2');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            const targetBox = e.currentTarget;
+            targetBox.classList.remove('ring-4', 'ring-cyan-300', 'ring-offset-2');
+
+            // Retrieve user_id from data transfer
+            const userId = e.dataTransfer.getData('text/plain');
+            const employeeIndex = employeeData.findIndex(e => e.user_id === userId);
+
+            if (employeeIndex === -1 || !targetBox) {
+                const marker = document.getElementById(`emp-${userId}`);
+                if (marker) marker.classList.remove('opacity-50');
+                return;
+            }
+
+            const employee = employeeData[employeeIndex];
+            const oldPlacement = employee.placement;
+            const newPlacement = targetBox.id;
+
+            if (oldPlacement === newPlacement) {
+                 document.getElementById(`emp-${userId}`).classList.remove('opacity-50');
+                 return;
+            }
+
+            // Get new categorical values from the box coordinates
+            const newPotential = targetBox.getAttribute('data-box-y');
+            const newPerformance = targetBox.getAttribute('data-box-x');
+            
+            // 1. Update local data
+            employee.placement = newPlacement;
+            employee.potential_category = newPotential;
+            employee.performance_category = newPerformance;
+
+            // 2. Save and Log (simulated)
+            saveData();
+            logCalibrationChange(userId, oldPlacement, newPlacement, 'D&D Calibration');
+
+            showMessageBox(`${employee.name} calibrated to ${newPlacement} (D&D).`, 'info');
+            
+            // 3. Re-render the grid to apply changes instantly
+            renderEmployees();
+
+            // Re-enable dragging
+            const marker = document.getElementById(`emp-${userId}`);
+            if (marker) marker.classList.remove('opacity-50');
+            
+            // Update selected employee in UI
+            if (selectedEmployee && selectedEmployee.user_id === userId) {
+                selectedEmployee = employee;
+                showEmployeeDetails(userId);
+            }
+        }
+        
+        // Added a global dragend listener to cleanup opacity and sticky highlights
+        document.addEventListener('dragend', (e) => {
+            if (e.target.classList.contains('employee-marker')) {
+                e.target.classList.remove('opacity-50');
+            }
+            document.querySelectorAll('.box').forEach(box => box.classList.remove('ring-4', 'ring-cyan-300', 'ring-offset-2'));
+        });
+
+
+        // --- Details Panel & Editing ---
+
+        function hideEmployeeDetails() {
+             // Clear selection highlight
+            document.querySelectorAll('.employee-marker').forEach(m => m.classList.remove('marker-selected'));
+            // Hide the panel
+            document.getElementById('details-panel').classList.add('hidden');
+            selectedEmployee = null;
+        }
+        
+        function showEmployeeDetails(userId) {
+            selectedEmployee = employeeData.find(e => e.user_id === userId);
+            
+            // Clear existing selection
+            document.querySelectorAll('.employee-marker').forEach(m => m.classList.remove('marker-selected'));
+
+            if (!selectedEmployee) {
+                hideEmployeeDetails();
+                return;
+            }
+
+            const box = BOXES.find(b => b.id === selectedEmployee.placement);
+
+            // Highlight the marker
+            const marker = document.getElementById(`emp-${userId}`);
+            if (marker) marker.classList.add('marker-selected');
+            
+            // Show the panel
+            document.getElementById('details-panel').classList.remove('hidden');
+
+            const html = `
+                <div>
+                    <!-- Basic Info & Strategy -->
+                    <div class="space-y-2 pb-4 mb-4 border-b border-gray-700">
+                        <p class="text-xl font-bold text-white">${selectedEmployee.name}</p>
+                        <p class="text-sm font-medium text-cyan-400">${selectedEmployee.title}</p>
+                        
+                        <p class="text-xs text-gray-300 mt-2">User ID: <span class="font-semibold text-white">${selectedEmployee.user_id}</span></p>
+
+                        <p class="pt-2 text-md font-semibold text-green-400">9-Box Segment:</p>
+                        <p class="text-md font-medium text-white">${box ? box.name : 'N/A'}</p>
+                        <p class="text-sm text-gray-300">Strategy: ${box ? box.strategy : 'N/A'}</p>
+                        
+                        <p class="text-xs text-gray-300 mt-2">Department: ${selectedEmployee.department}</p>
+                    </div>
+
+                    <!-- Calibration Scores -->
+                    <div class="space-y-3 pt-4 pb-4 mb-4 border-b border-gray-700">
+                        <p class="text-md font-semibold text-white border-b pb-1 mb-2">Calibration Scores</p>
+                        
+                        ${createCategorySelect('performance-edit', 'performance_category', selectedEmployee.performance_category)}
+                        ${createCategorySelect('potential-edit', 'potential_category', selectedEmployee.potential_category)}
+
+                        <button onclick="saveDetailsPanel()" class="mt-4 w-full py-2 btn-theme btn-primary-theme transition duration-150">
+                            Save Changes & Re-calibrate
+                        </button>
+                    </div>
+
+                    <!-- Succession Planning -->
+                    <div class="space-y-3 pt-4">
+                         <p class="text-md font-semibold text-white border-b pb-1 mb-2">Succession & Risk</p>
+                         
+                         <div>
+                            <label for="successor_role" class="block text-xs font-medium text-gray-300">Suggested Successor Role</label>
+                            <input id="successor_role" type="text" value="${selectedEmployee.successor_role || ''}" 
+                                   class="w-full text-sm controls-input" placeholder="e.g., VP of Product">
+                         </div>
+
+                         ${createDropdown('Readiness Level', 'readiness_level', selectedEmployee.readiness_level, ['Ready Now', '6-12 Months', '1-2 Years', '2+ Years'])}
+                         ${createDropdown('Retention Risk', 'retention_risk', selectedEmployee.retention_risk, ['Low', 'Moderate', 'High'])}
+                         
+                         <div>
+                            <label for="notes" class="block text-xs font-medium text-gray-300">Comments</label>
+                            <textarea id="notes" class="w-full text-sm h-12 controls-input" placeholder="Add comments here...">${selectedEmployee.notes || ''}</textarea>
+                         </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('employee-info').innerHTML = html;
+        }
+
+        function createCategorySelect(id, field, currentValue) {
+            const options = ['Low', 'Moderate', 'High'].map(val => 
+                `<option value="${val}" ${currentValue === val ? 'selected' : ''}>${val}</option>`
+            ).join('');
+            
+            // Adjusted classes to match dark theme input style
+            return `
+                <div class="flex flex-col">
+                    <label for="${id}" class="text-xs font-medium text-gray-300">${field.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')} Category</label>
+                    <select id="${id}" data-field="${field}" 
+                            class="w-full p-2 border rounded-lg shadow-sm text-sm controls-select">
+                        ${options}
+                    </select>
+                </div>
+            `;
+        }
+
+        function createDropdown(label, field, currentValue, values) {
+            const options = values.map(val => 
+                `<option value="${val}" ${currentValue === val ? 'selected' : ''}>${val}</option>`
+            ).join('');
+            
+            // Adjusted classes to match dark theme input style
+            return `
+                <div>
+                    <label for="${field}" class="block text-xs font-medium text-gray-300">${label}</label>
+                    <select id="${field}" class="w-full p-2 border rounded-lg text-sm controls-select">
+                        ${options}
+                    </select>
+                </div>
+            `;
+        }
+
+
+        /**
+         * Saves all fields from the details panel to local storage and recalculates placement.
+         */
+        function saveDetailsPanel() {
+            if (!selectedEmployee) return;
+
+            const employeeIndex = employeeData.findIndex(e => e.user_id === selectedEmployee.user_id);
+            if (employeeIndex === -1) return;
+
+            const oldPlacement = selectedEmployee.placement;
+            
+            const performance_category = document.getElementById('performance-edit').value;
+            const potential_category = document.getElementById('potential-edit').value;
+            
+            const newPlacement = CATEGORY_MAP[`${potential_category}_${performance_category}`];
+
+            const updatedFields = {
+                performance_category,
+                potential_category,
+                placement: newPlacement,
+                successor_role: document.getElementById('successor_role').value,
+                readiness_level: document.getElementById('readiness_level').value,
+                retention_risk: document.getElementById('retention_risk').value,
+                notes: document.getElementById('notes').value
+            };
+
+            // 1. Update employeeData array
+            employeeData[employeeIndex] = { ...employeeData[employeeIndex], ...updatedFields };
+
+            // 2. Save and Log (simulated)
+            saveData();
+            if (oldPlacement !== newPlacement) {
+                logCalibrationChange(selectedEmployee.user_id, oldPlacement, newPlacement, 'Score Edit/Recalibration');
+            }
+            
+            showMessageBox(`${selectedEmployee.name}'s details saved. Placement: ${oldPlacement} -> ${newPlacement}.`, 'success');
+
+            // 3. Update selected employee object and re-render the UI
+            selectedEmployee = employeeData[employeeIndex];
+            renderEmployees();
+            showEmployeeDetails(selectedEmployee.user_id); 
+        }
+
+
+        // --- Audit & Logging (Simulated with Console) ---
+        
+        /**
+         * Logs a change to the console, simulating the audit log.
+         */
+        function logCalibrationChange(userId, oldPlacement, newPlacement, changeType) {
+            const timestamp = new Date().toISOString();
+            const logData = {
+                timestamp,
+                user_id: userId,
+                old_placement: oldPlacement,
+                new_placement: newPlacement,
+                change_type: changeType,
+                auditor_id: MOCK_USER_ID
+            };
+            // In a static app, we log to console instead of a database
+            console.log(`[AUDIT LOG]`, logData);
+        }
+
+
+        // --- Export Functionality ---
+
+        function exportData(format) {
+            if (employeeData.length === 0) {
+                showMessageBox("No data to export.", 'error');
+                return;
+            }
+
+            const dataToExport = employeeData.map(e => ({
+                user_id: e.user_id,
+                name: e.name,
+                title: e.title,
+                department: e.department,
+                manager_id: e.manager_id,
+                performance_category: e.performance_category,
+                potential_category: e.potential_category,
+                placement_id: e.placement,
+                box_strategy: BOXES.find(b => b.id === e.placement)?.strategy,
+                successor_role: e.successor_role || '',
+                readiness_level: e.readiness_level || '',
+                retention_risk: e.retention_risk || '',
+                notes: (e.notes || '').replace(/,/g, ';') // Sanitize commas for CSV
+            }));
+
+            if (format === 'csv') {
+                const headers = Object.keys(dataToExport[0]).join(',');
+                const rows = dataToExport.map(obj => Object.values(obj).join(','));
+                const csvContent = [headers, ...rows].join('\n');
+                downloadFile(csvContent, 'caliber9_talent_raw_data.csv', 'text/csv');
+                showMessageBox('Raw CSV data exported!', 'success');
+            } else if (format === 'summary') {
+                 const summaryData = dataToExport
+                    .filter(e => e.placement_id === 'H_H' || e.placement_id === 'H_M')
+                    .map(e => ({
+                        user_id: e.user_id,
+                        name: e.name,
+                        placement: e.placement_id,
+                        strategy: e.box_strategy,
+                        successor_role: e.successor_role,
+                        readiness_level: e.readiness_level
+                    }));
+                
+                if (summaryData.length === 0) {
+                    showMessageBox("No Rough Diamond or Future Star data to export.", 'info');
+                    return;
+                }
+
+                const headers = Object.keys(summaryData[0]).join(',');
+                const rows = summaryData.map(obj => Object.values(obj).join(','));
+                const csvContent = [headers, ...rows].join('\n');
+                downloadFile(csvContent, 'caliber9_summary_report.csv', 'text/csv');
+                showMessageBox('Calibration Summary Report exported!', 'success');
+
+            } else if (format === 'pdf') {
+                // FIXED: Implemented html2canvas capture logic for visual snapshot
+                const gridElement = document.getElementById('nine-box-grid');
+                
+                // Use html2canvas to capture the grid element
+                html2canvas(gridElement, {
+                    scale: 2, // Higher scale for better quality
+                    backgroundColor: 'transparent' // Ensure background is transparent to show animated shapes
+                }).then(canvas => {
+                    const imageData = canvas.toDataURL('image/png');
+                    
+                    // Open image in a new window/tab for easy saving/snipping
+                    const win = window.open('', '_blank');
+                    win.document.write('<img src="' + imageData + '" style="display: block; margin: 0 auto; max-width: 100%; background: #1a1a2e;">');
+                    win.document.title = "Caliber 9 Grid Snapshot";
+                    win.document.close();
+                    
+                    showMessageBox('Grid Snapshot generated! Please save or copy the image from the new window.', 'success');
+                }).catch(err => {
+                    console.error("Error capturing grid snapshot:", err);
+                    showMessageBox('Failed to capture snapshot. See console.', 'error');
+                });
+            }
+        }
+
+        /**
+         * Utility to trigger a file download in the browser.
+         */
+        function downloadFile(content, fileName, mimeType) {
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        /**
+         * Shows a temporary, styled message box to the user.
+         */
+        function showMessageBox(message, type = 'info') {
+            const box = document.getElementById('message-box');
+            let bgColor = 'bg-blue-600';
+
+            if (type === 'success') bgColor = 'bg-green-600';
+            else if (type === 'error') bgColor = 'bg-red-600';
+
+            box.innerHTML = `
+                <div class="${bgColor} text-white p-3 rounded-lg shadow-xl font-medium">
+                    ${message}
+                </div>
+            `;
+            box.classList.remove('opacity-0', 'pointer-events-none');
+            box.classList.add('opacity-100');
+
+            setTimeout(() => {
+                box.classList.remove('opacity-100');
+                box.classList.add('opacity-0');
+                setTimeout(() => {
+                    box.classList.add('pointer-events-none');
+                }, 300);
+            }, 5000);
+        }
+
+        function getRandomColor() {
+            const colors = ['#f87171', '#fb923c', '#facc15', '#a3e635', '#4ade80', '#2dd4bf', '#38bdf8', '#818cf8', '#a78bfa', '#e879f9'];
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+
+
+        // --- Initialization ---
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // NOTE: initializeGlossyEffects is now handled by theme_setup.js
+            // initializeGlossyEffects(); 
+            initializeData();
+            
+            document.getElementById('file-upload').addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                // Check for file type based on extension
+                const fileName = file.name.toLowerCase();
+                const fileType = fileName.endsWith('.csv') ? 'csv' : (fileName.endsWith('.xlsx') ? 'xlsx' : 'unknown');
+
+                if (fileType === 'xlsx') {
+                    showMessageBox(`XLSX files require a complex library (e.g., SheetJS). Simulating import for this static demo.`, 'info');
+                    return;
+                }
+
+                if (fileType === 'csv') {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        try {
+                            const parsedData = parseCSV(event.target.result);
+                            if (parsedData.length > 0) {
+                                employeeData = parsedData;
+                                saveData();
+                                renderGrid();
+                                populateFilterOptions();
+                                showMessageBox(`Successfully loaded and mapped ${parsedData.length} employees from CSV.`, 'success');
+                            } else {
+                                showMessageBox("Uploaded CSV file is empty or missing required data.", 'error');
+                            }
+                        } catch (error) {
+                            console.error("Error during CSV parsing:", error);
+                            showMessageBox("Error processing CSV file. Check console for details.", 'error');
+                        }
+                    };
+                    reader.onerror = function() {
+                        showMessageBox("Error reading file.", 'error');
+                    };
+                    reader.readAsText(file);
+                } else {
+                     showMessageBox("Please upload a valid CSV or XLSX file.", 'error');
+                }
+            });
+
+            // Global listener to hide panel when clicking outside a marker/panel
+            document.addEventListener('click', (e) => {
+                const panel = document.getElementById('details-panel');
+                const controls = document.getElementById('controls-panel-container');
+
+                // Check if the click target is NOT an employee marker AND NOT inside the details panel
+                if (!e.target.closest('.employee-marker') && !e.target.closest('#details-panel')) {
+                    hideEmployeeDetails();
+                }
+
+                // Close the controls panel if visible and click is outside it (on mobile/overlay mode)
+                if (controls.classList.contains('panel-active') && !e.target.closest('#controls-panel-container') && !e.target.closest('#toggle-controls-btn')) {
+                    toggleControlsPanel();
+                }
+            });
+            // Initial hiding call
+            hideEmployeeDetails();
+            
+            // Set initial state of controls panel to hidden off-screen
+            document.getElementById('controls-panel-container').classList.add('panel-hidden');
+        });
+
+    </script>
+</body>
+</html>
