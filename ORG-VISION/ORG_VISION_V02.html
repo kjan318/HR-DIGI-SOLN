@@ -10,6 +10,8 @@
     <script src="https://d3js.org/d3.v7.min.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/d3-flextree@2.1.2/build/d3-flextree.min.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/d3-org-chart@2.6.0/build/d3-org-chart.min.js" crossorigin="anonymous"></script>
+    <!-- Snapshot Library -->
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 
     <style>
         /* =========================================
@@ -292,7 +294,8 @@
                     ORG VISION
                 </div>
                 <div class="nav-links">
-                    <a href="#" onclick="showPage('home')" class="active" id="nav-home">Dashboard</a>
+                    <a href="#" onclick="showPage('process')" id="nav-process" class="active">Process</a>
+                    <a href="#" onclick="showPage('home')" id="nav-home">Dashboard</a>
                     <a href="#" onclick="showPage('canvas')" id="nav-canvas">Canvas</a>
                     <a href="#" onclick="showPage('contact')" id="nav-contact">Contact</a>
                 </div>
@@ -302,8 +305,23 @@
 
     <div id="toast-container"></div>
 
+    <!-- PAGE: PROCESS (New) -->
+    <main id="process" class="page active">
+        <div class="container">
+            <div class="glass" style="max-width: 1400px; margin: 40px auto; padding: 40px; text-align: center;">
+                <h2 style="margin-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 15px;">Organization Vision Process Flow</h2>
+                <div style="background: rgba(0,0,0,0.2); padding: 20px; border-radius: 12px; display: inline-block;">
+                    <img src="Process_of_ORG_VISION.jpg" alt="Process Flowchart" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 5px 25px rgba(0,0,0,0.5);">
+                </div>
+                <div style="margin-top: 30px;">
+                    <button onclick="showPage('home')" class="btn btn-primary">Go to Dashboard</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
     <!-- PAGE: HOME -->
-    <main id="home" class="page active">
+    <main id="home" class="page">
         <div class="container" style="max-width: 1200px;">
             <section class="glass" style="text-align:center; padding: 80px 20px; margin-bottom: 40px;">
                 <h1 style="font-size: 3rem; margin-bottom: 20px; background: linear-gradient(to right, #fff, #00ffff); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Organizational Intelligence</h1>
@@ -364,6 +382,8 @@
                         <button onclick="document.getElementById('fileInput').click()" class="btn">📂 Import</button>
                         <button onclick="exportCsv()" class="btn">💾 Export</button>
                     </div>
+                    <!-- Added Snapshot Button -->
+                    <button onclick="takeSnapshot()" class="btn" style="width:100%; margin-top:5px;">📷 Snapshot</button>
                 </div>
 
                 <!-- Search Group -->
@@ -438,10 +458,18 @@
                 </div>
                 
                 <div style="display:flex; gap: 20px; align-items: center;">
-                    <div style="font-size: 30px;">📍</div>
+                    <div style="width: 30px; height: 30px;">
+                        <svg viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                        </svg>
+                    </div>
                     <div>
-                        <h4 style="margin-bottom: 5px; color:white;">Linkedin</h4>
-                        <div style="color: var(--text-muted);">www.linkedin.com/in/kieso-jan-688a594</div>
+                        <h4 style="margin-bottom: 5px; color:white;">My Linkedin</h4>
+                        <div style="color: var(--text-muted);">
+                            <a href="https://www.linkedin.com/in/kieso-jan-688a594" target="_blank" style="color: var(--accent-color); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.3s;">
+                                View Profile 🔗
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -943,8 +971,8 @@
         }
 
         function generateAndLoadRandomData() {
-            const minPos = 50;
-            const maxPos = 150;
+            const minPos = 100;
+            const maxPos = 200;
             const totalPositions = Math.floor(Math.random() * (maxPos - minPos + 1)) + minPos;
             
             // Calculate target vacancies (10% - 30%)
@@ -1030,6 +1058,46 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url; a.download = 'org_vision_export.csv'; a.click();
+        }
+
+        // Snapshot Function
+        function takeSnapshot() {
+            const element = document.querySelector("#org-chart-container");
+            if(!element) return;
+            
+            showToast('Capturing snapshot...', 'info');
+            
+            html2canvas(element, {
+                backgroundColor: null,
+                scale: 2,
+                logging: false, // Turn off logging
+                onclone: (documentClone) => {
+                    // Fix: Force text color to black within the cloned chart container
+                    // This ensures that if styles are inherited from body (white), they are overridden here
+                    const chartContainer = documentClone.querySelector("#org-chart-container");
+                    if (chartContainer) {
+                        chartContainer.style.color = "#333333";
+                        // Also explicitly force node text colors just in case
+                        const texts = chartContainer.querySelectorAll('div, span, h1, h2, h3, h4, p');
+                        texts.forEach(t => {
+                            // Only override if the computed color was likely inheriting white
+                            // Or simply force dark color for content inside white cards
+                            if (t.closest('.node-rect')) {
+                                t.style.color = "#333333";
+                            }
+                        });
+                    }
+                }
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'org-chart-snapshot.png';
+                link.href = canvas.toDataURL();
+                link.click();
+                showToast('Snapshot saved!', 'success');
+            }).catch(err => {
+                console.error(err);
+                showToast('Snapshot failed', 'error');
+            });
         }
 
         // UI Helpers
