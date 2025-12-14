@@ -13,13 +13,101 @@
     <link rel="stylesheet" href="theme_setup.css">
     
     <style>
-        /* This style block is now empty as all application-specific CSS was moved to theme_setup.css */
+        /* This style block contains page-specific layout logic */
+        
+        /* Navigation Styles */
+        .nav-link {
+            cursor: pointer;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: background 0.3s, color 0.3s;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 600;
+            text-align: center;
+        }
+        
+        .nav-link:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .nav-link.active {
+            color: white;
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+        }
+
+        /* Page Switching Logic */
+        .page-section {
+            display: none; /* Hidden by default */
+            animation: fadeIn 0.5s ease-in-out;
+            width: 100%;
+        }
+
+        .page-section.active-section {
+            display: flex; /* Visible state */
+            flex-direction: column;
+        }
+        
+        /* Grid Page Specific Layout */
+        #page-matrix.active-section {
+            display: flex; 
+            flex-direction: column; 
+        }
+        @media (min-width: 1024px) {
+            #page-matrix.active-section {
+                flex-direction: row;
+            }
+        }
+
+        /* Process Page Specific Layout */
+        #page-process.active-section {
+            display: flex;
+            justify-content: center;
+            align-items: start;
+            min-height: 80vh;
+        }
+
+        /* Contact Page Specific Layout */
+        #page-contact.active-section {
+            display: flex;
+            justify-content: center;
+            align-items: start;
+            padding-top: 40px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Contact Card Styles */
+        .contact-card-inner {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            cursor: default;
+        }
+        .contact-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+            font-size: 1.2rem;
+        }
     </style>
 </head>
 <body class="p-0">
 
     <!-- Animated Shapes Container (Injected from Theme) -->
-    <!-- The classes for these shapes are defined in theme_setup.css -->
     <div class="bg-shapes">
         <div class="shape"></div>
         <div class="shape"></div>
@@ -33,32 +121,38 @@
 
     <div class="container mx-auto p-4 md:p-8">
 
-        <header class="mb-6 pb-4 flex justify-between items-center glass p-6">
+        <!-- HEADER -->
+        <header class="mb-6 pb-4 flex flex-wrap justify-between items-center glass p-6 gap-4">
             <div class="flex items-center gap-4">
-                 <!-- UX FIX: Moved toggle button here for proximity to the sliding panel -->
+                 <!-- Toggle button: managed by JS to show only on Matrix page -->
                 <button id="toggle-controls-btn" onclick="toggleControlsPanel()" 
-                        class="btn-theme btn-primary-theme text-sm font-semibold transition duration-150">
+                        class="btn-theme btn-primary-theme text-sm font-semibold transition duration-150" style="display:none;">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sliders-horizontal"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="18" x2="3" y1="12" y2="12"/><line x1="21" x2="18" y1="12" y2="12"/><line x1="21" x2="12" y1="20" y2="20"/><line x1="8" x2="3" y1="20" y2="20"/><line x1="14" y1="2" x2="14" y2="6"/><line x1="18" y1="10" x2="18" y2="14"/><line x1="12" y1="18" x2="12" y2="22"/></svg>
                 </button>
                 <div class="flex flex-col">
-                    <h1 class="text-3xl font-extrabold text-white">Caliber 9 Talent Matrix</h1>
+                    <h1 class="text-3xl font-extrabold text-white">Caliber 9</h1>
                     <div id="auth-info" class="text-sm text-gray-300 mt-1">
-                        <span id="user-id-display">Data Storage: LocalStorage (Not Collaborative)</span> |
-                        <span id="app-id-display">Simulated App: Static</span>
+                        <span id="user-id-display">Talent Matrix</span>
                     </div>
                 </div>
             </div>
+
+            <!-- Navigator Menu -->
+            <nav class="flex items-center gap-2 bg-black bg-opacity-20 p-1 rounded-xl">
+                <div class="nav-link active" onclick="switchPage('process')" id="nav-process">Process</div>
+                <div class="nav-link" onclick="switchPage('matrix')" id="nav-matrix">Talent Matrix</div>
+                <div class="nav-link" onclick="switchPage('contact')" id="nav-contact">Contact</div>
+            </nav>
             
-            <!-- UX OPTIMIZATION: Reduced logo size to 64px for better header balance -->
+            <!-- Logo Icon Component -->
             <div class="flex items-center justify-end">
                 <img 
                     src="images/caliber9_logo.png" 
                     alt="Caliber 9 Logo" 
-                    class="w-24 h-24 shadow-lg"
+                    class="w-16 h-16 shadow-lg"
                     onerror="this.onerror=null; this.src='https://placehold.co/64x64/00ffff/000000?text=C9';"
                 />
             </div>
-            
         </header>
         
         <!-- Controls Panel (Floating Container - Applied Glass/Dark Styles) -->
@@ -81,7 +175,7 @@
                     + Add New Employee
                 </button>
 
-                <!-- New Employee Form Area (UX/A11Y FIX: Added explicit labels and standardized layout) -->
+                <!-- New Employee Form Area -->
                 <div id="new-employee-form-area" class="border p-4 rounded-lg hidden">
                     <!-- Content injected by JS below -->
                 </div>
@@ -127,8 +221,18 @@
             </div>
         </div>
 
+    <!-- PAGE 1: PROCESS PAGE (Default Home) -->
+    <div id="page-process" class="page-section active-section">
+        <div class="glass p-6 w-full max-w-6xl mx-auto">
+            <h2 class="text-2xl font-bold text-white mb-6 border-b border-gray-600 pb-2">Talent Calibration Process</h2>
+            <div class="w-full flex justify-center bg-black bg-opacity-30 rounded-xl overflow-hidden p-4">
+                <img src="images/Process_Caliber_9.jpg" alt="Caliber 9 Process Flow" class="max-w-full h-auto rounded-lg shadow-2xl" onerror="this.onerror=null; this.parentElement.innerHTML='<p class=\'text-white p-10 text-center\'>Process flow chart (Process_Caliber_9.jpg) not found. Please ensure the image is uploaded.</p>'">
+            </div>
+        </div>
+    </div>
 
-    <main id="app-content" class="flex flex-col lg:flex-row gap-6 transition-transform duration-500">
+    <!-- PAGE 2: TALENT MATRIX PAGE (Original Content) -->
+    <div id="page-matrix" class="page-section">
         
         <!-- Grid Visualization (Column 2 - Applied Glass/Dark Styles) -->
         <div class="lg:w-3/4 flex flex-col glass p-6">
@@ -164,12 +268,77 @@
                 <div id="employee-info" class="text-sm">Click an employee marker to view or edit their details.</div>
             </div>
         </div>
-    </main>
+    </div>
+
+    <!-- PAGE 3: CONTACT PAGE -->
+    <div id="page-contact" class="page-section">
+        <div class="glass p-8 w-full max-w-md mx-auto">
+            <h2 class="text-3xl font-bold text-white mb-2">Get in Touch</h2>
+            <div class="w-full h-px bg-gray-600 mb-6"></div>
+            
+            <div class="contact-card-inner">
+                <!-- Contact Me -->
+                <div class="contact-item p-4 rounded-xl hover:bg-white hover:bg-opacity-5 transition">
+                    <div class="contact-icon text-2xl">📧</div>
+                    <div>
+                        <p class="text-sm font-bold text-white">Contact Me</p>
+                        <p class="text-gray-300 select-all">kieso.jan@outlook.com</p>
+                    </div>
+                </div>
+
+                <!-- LinkedIn -->
+                <div class="contact-item p-4 rounded-xl hover:bg-white hover:bg-opacity-5 transition">
+                    <div class="contact-icon text-2xl">in</div>
+                    <div>
+                        <p class="text-sm font-bold text-white">My Linkedin</p>
+                        <a href="#" class="text-cyan-400 hover:text-cyan-300 underline text-sm">View Profile 🔗</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- UPDATED: Importing external theme JavaScript for interactive effects -->
     <script src="theme_setup.js"></script> 
     
     <script>
+        // --- Page Navigation Logic ---
+        function switchPage(pageId) {
+            // 1. Hide all pages
+            document.querySelectorAll('.page-section').forEach(el => {
+                el.classList.remove('active-section');
+            });
+            // 2. Remove active class from nav links
+            document.querySelectorAll('.nav-link').forEach(el => {
+                el.classList.remove('active');
+            });
+
+            // 3. Show selected page
+            const targetPage = document.getElementById(`page-${pageId}`);
+            if (targetPage) {
+                targetPage.classList.add('active-section');
+            }
+
+            // 4. Set active nav link
+            const targetLink = document.getElementById(`nav-${pageId}`);
+            if (targetLink) {
+                targetLink.classList.add('active');
+            }
+
+            // 5. Toggle Controls Button Visibility
+            const toggleBtn = document.getElementById('toggle-controls-btn');
+            if (pageId === 'matrix') {
+                toggleBtn.style.display = 'block';
+            } else {
+                toggleBtn.style.display = 'none';
+                // Also ensure the panel is closed when leaving the matrix page
+                const panel = document.getElementById('controls-panel-container');
+                if (panel.classList.contains('panel-active')) {
+                    toggleControlsPanel(); 
+                }
+            }
+        }
+
         // --- Global Variables and Persistence Setup (LocalStorage) ---
         let employeeData = [];
         let selectedEmployee = null;
@@ -267,7 +436,7 @@
                 <div class="flex flex-col">
                     <label for="${id}" class="text-xs font-medium text-gray-300">${field.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')} Category</label>
                     <select id="${id}" data-field="${field}" 
-                            class="w-full p-2 border rounded-lg shadow-sm text-sm">
+                            class="w-full p-2 border rounded-lg shadow-sm text-sm controls-select">
                         ${options}
                     </select>
                 </div>
@@ -283,7 +452,7 @@
             return `
                 <div>
                     <label for="${field}" class="block text-xs font-medium text-gray-300">${label}</label>
-                    <select id="${field}" class="w-full p-2 border rounded-lg text-sm">
+                    <select id="${field}" class="w-full p-2 border rounded-lg text-sm controls-select">
                         ${options}
                     </select>
                 </div>
@@ -1186,7 +1355,4 @@
 
     </script>
 </body>
-
 </html>
-
-
